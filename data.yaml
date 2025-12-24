@@ -1,0 +1,14 @@
+# Dataset configuration for YOLO training
+path: dataset # Dataset root directory
+train: train/images # Train images
+val: valid/images # Validation images
+test: test/images # Test images
+
+# Classes
+names:
+  0: airplane
+  1: drone
+  2: helicopter
+
+# Number of classes
+nc: 3
