@@ -210,3 +210,73 @@ __marimo__/
 dataset/
 test_images/
 runs/
+
+# C++ Build artifacts
+AeroTrack/build/
+AeroTrack/*.exe
+AeroTrack/*.o
+AeroTrack/*.obj
+AeroTrack/*.a
+AeroTrack/*.lib
+AeroTrack/*.out
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Visual Studio
+.vs/
+.vscode/tasks.json
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+Debug/
+Release/
+x64/
+x86/
+
+# ONNX Runtime downloaded files
+AeroTrack/onnxruntime-win-x64-*/
+AeroTrack/*.zip
+
+# Model files (large)
+*.onnx
+*.pt
+*.pth
+*.weights
+AeroTrack/last.onnx
+
+# Video and image test files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+AeroTrack/*.mp4
+AeroTrack/*.png
+AeroTrack/*.jpg
+
+# Output files
+output.mp4
+AeroTrack/output.mp4
+
+# Datasets (large)
+military-aircraft-yolo/
+yolov11_env/
+
+# Training outputs
+weights/
+best.onnx
+
+# Windows DLL files
+AeroTrack/*.dll
+onnxruntime.dll
