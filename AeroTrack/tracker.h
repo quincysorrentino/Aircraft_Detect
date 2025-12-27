@@ -6,7 +6,7 @@ class GhostTracker
 public:
     GhostTracker();
     void initialize(cv::Rect firstDetection);
-    void predict();
+    cv::Rect predict();
     void update(cv::Rect detectedBox, float confidence = 1.0f);
     cv::Rect getPrediction() const;
     void incrementLostFrames();

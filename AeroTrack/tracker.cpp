@@ -1,5 +1,12 @@
 #include "tracker.h"
 
+namespace
+{
+    constexpr float kProcessNoise = 3e-3f;  // tunable: increase for more agility
+    constexpr float kMeasNoiseBase = 5e-2f; // tunable: base measurement noise
+    constexpr float kInitError = 0.1f;
+}
+
 GhostTracker::GhostTracker() : framesLost(0), initialized(false)
 {
     // state: [x, y, vx, vy, w, h]
@@ -11,11 +18,15 @@ GhostTracker::GhostTracker() : framesLost(0), initialized(false)
                            0, 0, 0, 0, 1, 0, // width stays same
                            0, 0, 0, 0, 0, 1);
 
-    setIdentity(kf.measurementMatrix);
+    // Map measurements [cx, cy, w, h] to state [x, y, vx, vy, w, h]
+    kf.measurementMatrix = (cv::Mat_<float>(4, 6) << 1, 0, 0, 0, 0, 0,
+                            0, 1, 0, 0, 0, 0,
+                            0, 0, 0, 0, 1, 0,
+                            0, 0, 0, 0, 0, 1);
     // Tuned noise parameters for smoother tracking
-    setIdentity(kf.processNoiseCov, cv::Scalar::all(1e-3));     // Increased from 1e-4
-    setIdentity(kf.measurementNoiseCov, cv::Scalar::all(5e-2)); // Reduced from 1e-1
-    setIdentity(kf.errorCovPost, cv::Scalar::all(0.1));
+    setIdentity(kf.processNoiseCov, cv::Scalar::all(kProcessNoise));
+    setIdentity(kf.measurementNoiseCov, cv::Scalar::all(kMeasNoiseBase));
+    setIdentity(kf.errorCovPost, cv::Scalar::all(kInitError));
 }
 
 void GhostTracker::initialize(cv::Rect firstDetection)
@@ -31,12 +42,17 @@ void GhostTracker::initialize(cv::Rect firstDetection)
     framesLost = 0;
 }
 
-void GhostTracker::predict()
+cv::Rect GhostTracker::predict()
 {
-    if (initialized)
-    {
-        kf.predict();
-    }
+    if (!initialized)
+        return {};
+
+    cv::Mat pred = kf.predict(); // updates statePre
+    float cx = pred.at<float>(0);
+    float cy = pred.at<float>(1);
+    float w = pred.at<float>(4);
+    float h = pred.at<float>(5);
+    return cv::Rect(cv::Point2f(cx - w / 2.0f, cy - h / 2.0f), cv::Size2f(w, h));
 }
 
 void GhostTracker::update(cv::Rect b, float confidence)
@@ -46,24 +62,34 @@ void GhostTracker::update(cv::Rect b, float confidence)
     float cy = b.y + b.height / 2.0f;
     cv::Mat measure = (cv::Mat_<float>(4, 1) << cx, cy, b.width, b.height);
 
+    // Keep predicted center before correction to derive observed velocity
+    float preX = kf.statePre.at<float>(0);
+    float preY = kf.statePre.at<float>(1);
+
     // Adaptive measurement noise based on confidence
     // High confidence (0.9) -> low noise (2e-2)
     // Low confidence (0.7) -> high noise (1e-1)
-    float adaptiveNoise = 0.15f - (confidence * 0.13f);              // Maps 0.7->0.059, 0.9->0.033
+    float adaptiveNoise = kMeasNoiseBase + (0.12f - confidence * 0.1f);
     adaptiveNoise = std::max(0.02f, std::min(0.15f, adaptiveNoise)); // Clamp between 0.02 and 0.15
 
     setIdentity(kf.measurementNoiseCov, cv::Scalar::all(adaptiveNoise));
 
     kf.correct(measure);
+
+    // Inject measured velocity using residual to stop runaway drift
+    float vx = cx - preX;
+    float vy = cy - preY;
+    kf.statePost.at<float>(2) = vx;
+    kf.statePost.at<float>(3) = vy;
     framesLost = 0;
 }
 
 cv::Rect GhostTracker::getPrediction() const
 {
-    float cx = kf.statePost.at<float>(0);
-    float cy = kf.statePost.at<float>(1);
-    float w = kf.statePost.at<float>(4);
-    float h = kf.statePost.at<float>(5);
+    float cx = kf.statePre.at<float>(0);
+    float cy = kf.statePre.at<float>(1);
+    float w = kf.statePre.at<float>(4);
+    float h = kf.statePre.at<float>(5);
     // Convert from center coordinates back to top-left
     return cv::Rect(cx - w / 2.0f, cy - h / 2.0f, w, h);
 }
