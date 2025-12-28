@@ -943,6 +943,10 @@ int main(int argc, char **argv)
             cv::putText(output_frame, trackInfo, {10, output_height - 20},
                         cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 0), 2);
 
+            std::string detLabel = suppressDetections ? "Detections: OFF" : "Detections: ON";
+            cv::putText(output_frame, detLabel, {10, output_height - 50},
+                        cv::FONT_HERSHEY_SIMPLEX, 0.8, suppressDetections ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 200, 0), 2);
+
             // Write frame to output video
             writer.write(output_frame);
 
