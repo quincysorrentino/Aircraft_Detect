@@ -7,10 +7,11 @@ The goal was to design something that reflects how real perception stacks are bu
 
 My goal was to design a system that closely mirrored how perception systems are built in industry. Including model training, running real time inference with hardware limitations, and fusing the results with classical state estimation.
 
-This project demonstrates a complete **Sense-and-Avoid** architectural pattern:
-- **Detection:** Optimized YOLO11 inference using ONNX Runtime.
-- **Estimation:** Recursive state estimation via a Kalman Filter to handle occlusions and sensor noise.
-- **Systems:** A modular C++ framework designed for low-latency execution on edge hardware.
+This project implements the perception and tracking components commonly used in Sense-and-Avoid systems:
+  - **Model Fine-Tuning**: Custom fine-tuning of the YOLO11n model on domain-specific aerial imagery to improve detection performance and robustness.
+  - **Detection**: Real-time aircraft detection using optimized YOLO11n inference deployed via ONNX Runtime.
+  - **Tracking**: Kalman Filter–based state estimation to maintain stable target tracks under noise and occlusion.
+  - **Systems**: A modular C++ framework designed for low-latency execution and deployment on edge hardware.
 
 ## Gallery
 <table width="100%">
@@ -36,10 +37,10 @@ Video showing the detector being turned off after three seconds, allowing KO-CV 
 
 | Technology | Role |
 |---------|------|
-| **PyTorch / Ultralytics** | YOLOv11n model finetuning |
-| **Python** | Training, preprocessing, and tooling |
-| **ONNX Runtime** | Inference in C++ |
-| **OpenCV** | Image processing, visualization, video I/O |
+| **ONNX Runtime (CUDA)** | High-performance GPU-accelerated inference within the C++ pipeline |
+| **OpenCV** | Image preprocessing, visualization, and video I/O in the runtime system |
+| **PyTorch / Ultralytics** | Fine-tuning the YOLOv11n model and exporting trained weights |
+| **Python** | Dataset preprocessing, training orchestration, evaluation, and tooling |
 
 ## Deep Dive: The Perception Pipeline
 
