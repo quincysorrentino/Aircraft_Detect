@@ -5,12 +5,12 @@ Perception for aerial systems such as, collision avoidance, autonomous navigatio
 
 The goal was to design something that reflects how real perception stacks are built in industry: trained models, exported for deployment, integrated into real time C++ code, and paired with classical state estimation.
 
+My goal was to design a system that closely mirrored how perception systems are built in industry. Including model training, running real time inference with hardware limitations, and fusing the results with classical state estimation.
+
 This project demonstrates a complete **Sense-and-Avoid** architectural pattern:
 - **Detection:** Optimized YOLO11 inference using ONNX Runtime.
 - **Estimation:** Recursive state estimation via a Kalman Filter to handle occlusions and sensor noise.
 - **Systems:** A modular C++ framework designed for low-latency execution on edge hardware.
-
-
 
 ## Gallery
 <table width="100%">
@@ -36,31 +36,32 @@ Video showing the detector being turned off after three seconds, allowing KO-CV 
 
 | Technology | Role |
 |---------|------|
-| **PyTorch / Ultralytics** | Model training and experimentation |
+| **PyTorch / Ultralytics** | YOLOv11n model finetuning |
 | **Python** | Training, preprocessing, and tooling |
 | **ONNX Runtime** | Inference in C++ |
 | **OpenCV** | Image processing, visualization, video I/O |
+
 ## Deep Dive: The Perception Pipeline
 
 #### Object Detection (YOLO11)
 
-The system utilizes a specialized **YOLO11n** model trained (using an Nvidia A100 GPU instance through Google Colab) on a curated dataset of military aircraft. 
+The system utilizes a finetuned **YOLO11n** model, trained (using an Nvidia A100 GPU instance through Google Colab) on a specialized military aircraft dataset from Kaggle.
 - **Preprocessing:** Frames are resized to $640 \times 640$ using **letterboxing** to preserve aspect ratios, followed by channel-swapping (BGR to RGB) and pixel normalization.
 - **Post-Processing:** Implements **Non-Maximum Suppression (NMS)** in C++ to prune redundant bounding boxes. Detections are filtered based on a configurable confidence threshold ($T_{conf} > 0.45$).
 
 #### Temporal Tracking (Kalman Filter)
 
-To solve the problem of intermittent detections (flicker) and sensor noise, AeroSight employs a **Linear Kalman Filter (KF)** for each tracked object.
+To solve the problem of intermittent detections (flicker), sensor noise, or possible object occlusion behing a cloud or terrain, AeroSight employs a **Linear Kalman Filter (KF)** for each tracked object.
 - **State Vector:** The filter tracks an 8-dimensional state vector:
   $$x = [c_x, c_y, a, h, \dot{c}_x, \dot{c}_y, \dot{a}, \dot{h}]^T$$
   where $(c_x, c_y)$ is the box center, $a$ is the aspect ratio, $h$ is the height, and the remaining terms represent their respective velocities.
 - **Motion Model:** A Constant-Velocity (CV) model predicts the aircraft's position in the next frame.
-- **Robustness:** If the detector fails to find the aircraft (due to occlusion or low contrast), the KF enters **Predict-Only mode**, using its internal motion model to maintain the track until the detector re-acquires the target.
+- **Robustness:** If the detector fails to track the aircraft, the KF enters **Predict-Only mode**, using its internal motion model to maintain the track until the detector re-acquires the target.
 
 #### C++ Inference Engine
-The core logic is implemented in C++ to ensure deterministic performance and minimal overhead.
+The core logic is implemented in C++ to ensure deterministic performance, maintian minimal overhead, and improve processing speeds.
 - **Memory Management:** Utilizes smart pointers and pre-allocated tensors to minimize heap allocations during the inference loop.
-- **Modularity:** The `Detector` class is decoupled from the `Tracker` class, allowing for "plug-and-play" swapping of models (e.g., moving from YOLO11 to a TensorRT-optimized engine).
+- **Modularity:** The `Detector` class is decoupled from the `Tracker` class, allowing for "plug-and-play" swapping of models.
 
 #### Repository Layout
 
