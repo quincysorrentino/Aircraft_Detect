@@ -18,12 +18,12 @@ This project demonstrates a complete **Sense-and-Avoid** architectural pattern:
     <td width="50%" align="center">
       <img src="https://github.com/user-attachments/assets/f1b949b0-ea76-4cd9-bb21-5e6bdc734941" style="width:100%;" />
       <br/>
-      <em>Image Shows Kalman-Only Constant-Velocity Tracker (KO-CV), indicated by red bounding box</em>
+      <em>Image shows Kalman-Only Constant-Velocity Tracker (KO-CV), indicated by red bounding box</em>
     </td>
     <td width="50%" align="center">
       <img src="https://github.com/user-attachments/assets/decd934e-b119-4eed-869c-84a3952d4833" style="width:100%;" />
       <br/>
-      <em>Image shows accuracy of class (aircraft type) detection</em>
+      <em>Image shows multiclass (aircraft type) detection capabilities</em>
     </td>
   </tr>
 </table>
